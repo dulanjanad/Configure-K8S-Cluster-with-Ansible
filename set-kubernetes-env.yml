@@ -1,0 +1,79 @@
+---
+
+  - hosts: workernodes
+    become: True
+    tasks:
+
+     - name: Create Configuration File for containerd
+       copy:
+         dest: /etc/modules-load.d/containerd.conf
+         content: |
+           overlay
+           br_netfilter
+     
+     - name: Load modules
+       modprobe:
+         name: "{{ item }}"
+       with_items:
+         - overlay
+         - br_netfilter
+     
+     - name: Set system configurations for Kubernetes networking
+       copy:
+         dest: /etc/sysctl.d/99-kubernetes-cri.conf
+         content: |
+           net.bridge.bridge-nf-call-iptables = 1
+           net.ipv4.ip_forward = 1
+           et.bridge.bridge-nf-call-ip6tables = 1
+     
+     - name: Apply new settings
+       shell: sysctl --system
+     
+     - name: Install containerd and dependency packages
+       apt:
+         update_cache: yes
+         name: ['containerd', 'apt-transport-https', 'curl']
+         state: present
+     
+     - name: Create default configuration file for containerd
+       file:
+         path: /etc/containerd
+         state: directory
+     
+     - name : Generate default containerd configuration and save to the newly created default file
+       shell: |
+          containerd config default | tee /etc/containerd/config.toml
+     
+     - name: Restart containerd to ensure new configuration file usage
+       service:
+         name: containerd
+         state: restarted
+     
+     - name: Disable Swap
+       shell: |
+         swapoff -a
+         sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab
+     
+     - name: Download and add GPG key
+       shell: |
+         curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
+     
+     - name: Add Kubernetes to repository list
+       copy:
+         dest: /etc/apt/sources.list.d/kubernetes.list
+         content: |
+           deb https://apt.kubernetes.io/ kubernetes-xenial main
+     
+     - name: Install Kubernetes packages
+       apt:
+         update_cache: yes
+         name: ['kubelet=1.23.0-00', 'kubeadm=1.23.0-00', 'kubectl=1.23.0-00']
+       
+     - name: Turn off automatic updates for Kubernetes packages
+       dpkg_selections:
+         name: python
+         selection: hold
+       with_items:
+         - kubelet
+         - kubeadm
+         - kubectl
