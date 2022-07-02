@@ -1,5 +1,0 @@
-[controlplane]
-localhost
-
-[workernodes]
-172.31.14.200
