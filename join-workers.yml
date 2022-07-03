@@ -9,10 +9,14 @@
       register: token
       become: False
     
+    - name: Set global variable
+      set_fact:
+        token_var : "{{ token }}"
+          
   
 - hosts: workernodes
   tasks:
-
-    - name: Print token
-      debug:
-        msg : "{{ token }}"
+  
+    - name: Join workernodes to controlplane
+      shell:
+        "{{ hostvars['localhost']['token_var'].stdout }}"
