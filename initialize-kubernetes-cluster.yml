@@ -1,7 +1,7 @@
 ---
 
   - hosts: controlplane
-    
+
     tasks:
 
       - name: Initialize the Kubernetes cluster on the control plane node using kubeadm
@@ -11,22 +11,22 @@
 
       - name: Create .kube directory in user's home directory
         file:
-          path: "/home/ansible/.kube"
+          path: "/home/ubuntu/.kube"
           state: directory
-          owner: ansible
-          group: ansible
+          owner: ubuntu
+          group: ubuntu
         become: True
 
       - name: Copy Kubernetes admin.config to user's kube config
         copy:
           src: /etc/kubernetes/admin.conf
-          dest: /home/ansible/.kube/config
-          owner: ansible
-          group: ansible
+          dest: /home/ubuntu/.kube/config
+          owner: ubuntu
+          group: ubuntu
           remote_src: yes
         become: True
 
       - name: Install Calico network add-on
-        shell: | 
+        shell: |
           kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml
         become: False
