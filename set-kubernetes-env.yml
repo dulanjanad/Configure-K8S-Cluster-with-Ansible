@@ -1,6 +1,6 @@
 ---
 
-  - hosts: workernodes
+  - hosts: all
     become: True
     tasks:
 
