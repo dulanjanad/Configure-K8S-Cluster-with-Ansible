@@ -30,3 +30,8 @@
         shell: |
           kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml
         become: False
+      
+      - name: Wait till controlplane is ready
+        wait_for:
+          timeout: 90
+        delegate_to: localhost
